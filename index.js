@@ -1,4 +1,3 @@
-let nextWordCheck = 10; // ms
 
 // ================================================
 const bip39 = require('bip39');
@@ -12,6 +11,9 @@ const { ethers } = require('ethers');
 
 const words = require('./words');
 const rpc = require('./rpc');
+
+
+let nextWordCheck = process.env.NEXT_WORD_CHECK; // ms
 // =================================================
 
 let providers = [];
