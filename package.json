@@ -4,6 +4,7 @@
     "dotenv": "^16.4.5",
     "ethereumjs-util": "^7.1.5",
     "ethers": "^6.13.4",
-    "hdkey": "^2.1.0"
+    "hdkey": "^2.1.0",
+    "node-telegram-bot-api": "^0.66.0"
   }
 }
